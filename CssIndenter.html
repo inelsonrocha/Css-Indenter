@@ -1,0 +1,352 @@
+<html> 
+<head>
+<title>WM CSS Indenter v1.2</title>
+<style type="text/css">
+body                  { font-family: Trebuchet MS, Arial, Helvetica, sans-serif; }
+h2                    { margin: 10px; }
+h4                    { clear: both; margin: 2px 0; }
+p                     { margin: 2px; }
+li                    { font-size: 0.9em; }
+li span               { font-weight: bold; }
+.wrapper              { margin: 0; overflow:auto;; padding:0 10px; width: 100%; }
+.expandedSide         { float: left; margin:0;; padding:0; width: 45%; }
+.collapsedSide        { float: left; margin:0;; padding:0; width: 45%; }
+.operacoes            { float: left; margin-top:150px;; width: 9%; }
+.modo                 { margin-top: 20px; text-align:center;; }
+.relatorioOperacao    { background-color: #EEEEEE; font-family: Consolas,"Courier New", monospaced; font-size: 0.8em; padding:10px;; }
+.editable             { background-color: #CCCCCC; font-family: Consolas,"Courier New", monospaced; font-size: 10px; height:500px; width: 100%; }
+.botao                { font-size: 2em; font-weght:bold; width: 100%; }
+</style>
+</head>
+<body>
+<h2>WM CSS Indenter</h2>
+
+<div class="wrapper">
+    <div class="expandedSide">
+        <h4>Expanded:</h4>
+        <p>
+            <textarea id="inText" class="editable"></textarea>
+        </p>
+        <p id="relatorioReverse" class="relatorioOperacao" /></p>
+    </div>
+    <div class="operacoes">
+        <div class="modo">
+            <input id="btn" class="botao" type="button" onclick="proc();" value=">" /> <input id="chkComentarios" type="checkbox" checked="checked" title="Retirar todos os comentários" /><br />
+            
+        </div>
+        <div class="modo">
+            <input id="btnReverse" class="botao" type="button" onclick="unProc();" value="<" /> <input id="chkComentariosUn" type="checkbox" checked="checked" title="Retirar todos os comentários" /><br />
+            
+        </div>
+    </div>
+    <div class="collapsedSide">
+        <h4>Collapsed:</h4>
+        <p>
+            <textarea id="outText" class="editable"></textarea>
+        </p>
+        <p id="relatorio" class="relatorioOperacao" /></p>
+    </div>
+</div>
+<div style="clear:both;">&nbsp;</div>
+<hr />
+<div>
+<h3>Changelog:</h3>
+<ul>
+    <li><span>1.4</span><br />
+        Alteração do layout: lado a lado; botões sem texto e no meio; relatórios sob a área de código;
+    </li>
+    <li><span>1.3</span><br />
+        Corrigido o ';;' que aparecia em algumas propriedades;<br />
+        Introduzida a conversão de linha única para várias linhas (conversão inversa);<br />
+        Alteração da formatação;<br />
+        Alteração do nome das caixas e das operações nos botões;</li>
+    <li><span>1.2</span><br />
+        Corrigida a opção "manter comentários" de modo a manter apenas os comentários de secção;<br />
+        Corrigido o espaço extra nas propriedades que tinham comentários;<br />
+        Acrescentados alguns estilos à página;</li>
+    <li><span>1.1</span><br />
+        Corrigido o comportamento da verificação de comentários de greedy para non-greedy;<br />
+        Reset da contagem de regras e selector expressions a cada execução;</li>
+        Acrescentada a opção de manter os comentários;<br />
+    <li><span>1.0</span><br />Versão Inicial</li>
+</ul>
+</div>
+<script type="text/javascript">
+
+function proc(){
+    var params = base();
+    params["operacao"] = 'indentar';
+    params["relatorioId"] = 'relatorio';
+    var chkComentarios = document.getElementById('chkComentarios');
+    params["stripComentarios"] = chkComentarios.checked;
+    WMCssIndent.workFromParams(params);
+}
+
+function unProc(){
+    var params = base();
+    params["operacao"] = 'desindentar';
+    params["relatorioId"] = 'relatorioReverse';
+    var chkComentarios = document.getElementById('chkComentariosUn');
+    params["stripComentarios"] = chkComentarios.checked;
+    WMCssIndent.workFromParams(params);
+}
+
+function base(){
+    var params = {};
+    params["inElemId"] = 'inText';
+    params["outElemId"] = 'outText';    
+
+    return params;
+}
+
+var WMCssIndent = function() {
+    var numRegras = 0;
+    var numSelectors = 0;
+    var momentoInicial;
+    var momentoFinal;
+    var stripComentarios = true;
+
+    var getCleanPropriedadesArray = function(regra){
+        var atrValor = regra.replace(/^.*\{[ ]*([^}]*)\}.*$/,'$1');
+        if(!stripComentarios)
+            atrValor = atrValor.replace(/[ ]*\/[*].*?[*]\/[ ]*/,' ');
+        atrValor = atrValor.replace(/\s*(:|;)\s*/,'$1 ');
+        var propriedades = atrValor.split('; ');
+        propriedades = removeEmpties(propriedades);
+        propriedades.sort();
+        return propriedades;
+    }
+    
+    var colocaPropriedadesInLine = function(regra){
+        var propriedades = getCleanPropriedadesArray(regra);
+        var almost = propriedades.join('; ') + ';';
+        return almost.replace(/[;]+/,';');
+    }
+    
+    var colocaPropriedadesInBlock = function(regra){
+        var propriedades = getCleanPropriedadesArray(regra);
+        var almost = '    ' + propriedades.join('; \n    ') + ';';
+        return almost.replace(/[;]+/,';');
+    }
+
+    var processaSelector = function(maxSelector,selector){
+        var grupos = selector.split(',');
+        grupos = removeEmpties(grupos);
+        var max=0
+        var len = grupos.length;
+        if(len>1){
+            for(var i = 0;i<len-1;i++){
+                grupos[i] = trim(grupos[i]);
+            }
+            grupos[len-1] = padRight(maxSelector,trim(grupos[len-1]));
+            numSelectors += len;
+            return '\n' + grupos.join(',\n');
+        }
+        else{
+            numSelectors += 1;
+            return padRight(maxSelector,trim(selector));
+        }
+    }
+    
+    var getSelectorLength = function (selector){
+        var grupos = selector.split(',');
+        grupos = removeEmpties(grupos);
+        var max=0
+        if(grupos.length>1){
+            for(var i = 0;i<grupos.length;i++){
+                if(max < grupos[i].length) max = (grupos[i].length);
+            }
+            return max;
+        }
+        else{
+            return selector.length;
+        }
+    }
+    
+    var sanitize = function (texto){
+        var output = texto.replace(/\n/g,' ');        
+        output = output.replace(/}\ */g,'}£');
+        if(stripComentarios)
+            output = output.replace(/\/\*.*?\*\//g,' ');
+        else {
+            output = output.replace(/£\s*(\/\*.*?\*\/)/g,'£$1£');
+            output = output.replace(/£+\s*£+/g,'£');
+        }
+        output = output.replace(/\s+/g,' ');
+        return output;
+    };
+    
+    var removeEmpties = function (arr){
+        var i=0;
+        var indexToDelete = [];
+        var len = arr.length;
+        for(i=0;i<len;i++){
+            if('' + arr[i] === '')
+                indexToDelete[indexToDelete.length] = i;
+        }
+        
+        len = indexToDelete.length;
+        for(i=0;i<len; i++){
+            arr.splice(indexToDelete[i],1);
+        }
+        return arr;
+    };
+    
+    var padRight = function (valor,texto){
+        if(texto.length > +valor) return texto;
+        var output = texto;
+        
+        while(output.length < valor){
+            output += ' ';
+        }
+        return output;
+    };
+    
+    var trim = function(texto){
+        return texto.replace(/^\ *(.*)\ *$/,'$1');
+    };
+        
+
+    var indent = function(valElem){
+        numRegras = 0;
+        numSelectors = 0;
+        var tempDate = new Date();
+        momentoInicial = tempDate.getTime();
+        var valElemPos = sanitize(valElem);
+        var linhas = valElemPos.split('£');
+        numRegras = 0;
+        var linhasOut = [];
+        var counter = linhas.length;
+        var selector='';
+        var selectorLength = 0;
+        var maxSelector = 0;
+
+        var linhaN;
+        for( i = 0; i< counter; i++){
+            linhaN = linhas[i];
+            if(/^\/\*.*\*\/$/.test(linhaN)) continue;
+            if(''+linhaN === '') continue;
+            
+            numRegras += 1;
+            linhaN = linhaN.replace(/\/\*.*?\*\//g,' ');
+            linhaN = linhaN.replace(/\s+/g,' ');
+            selector = linhaN.replace(/\{.*\}/,'');
+            selectorLength = getSelectorLength(selector);
+            if( selectorLength > maxSelector) maxSelector = selectorLength;
+        }
+
+        maxSelector += 2;
+        var i=0;
+        var linha;
+        for( i = 0; i< counter; i++){
+            linhaN = linhas[i];
+            indexMarca = linhaN.indexOf('{');
+            selector = linhaN.split('{')[0];
+
+            if(indexMarca > 0) {
+                linha = processaSelector(maxSelector,selector) + '{ ' + colocaPropriedadesInLine(linhaN) + ' }';
+            }
+            else {
+                linha = linhaN;
+            }
+
+            linhasOut[i] = linha;
+        }
+        
+        tempDate = new Date();
+        momentoFinal = tempDate.getTime();
+        return linhasOut.join('\n');
+    };
+
+    var unIndent = function(valElem){
+        numRegras = 0;
+        numSelectors = 0;
+        var tempDate = new Date();
+        momentoInicial = tempDate.getTime();
+        var valElemPos = sanitize(valElem);
+        var linhas = valElemPos.split('£');
+        numRegras = 0;
+        var linhasOut = [];
+        var counter = linhas.length;
+        var selector='';
+        var selectorLength = 0;
+        var maxSelector = 0;
+
+        var i=0;
+        var linhaN;
+        for( i = 0; i< counter; i++){
+            linhaN = linhas[i];
+            if(/^\/\*.*\*\/$/.test(linhaN)) continue;
+            if(''+linhaN === '') continue;
+            
+            numRegras += 1;
+        }
+        
+        var regra;
+        for( i = 0; i< counter; i++){
+            linhaN = linhas[i];
+            indexMarca = linhaN.indexOf('{');
+            selector = linhaN.split('{')[0];
+
+            if(indexMarca > 0) {
+                regra = selector + ' { \n' + colocaPropriedadesInBlock(linhaN) + '\n} \n';
+            }
+            else {
+                regra = linhaN;
+            }
+
+            linhasOut[i] = regra;
+        }
+        
+        tempDate = new Date();
+        momentoFinal = tempDate.getTime();
+        return linhasOut.join('\n');
+    };
+    
+    var imprimirRelatorio = function () {
+        var rel = 'Relatório:\n' + padRight(35,'Número de regras:') + numRegras + '\n';
+        if(numSelectors>0) {
+            rel += padRight(35,'Número de selector expressions:') + numSelectors + '\n';
+        }
+        var tmp = ((momentoFinal - momentoInicial)/1000);
+        rel += padRight(35,'Tempo de execução:')  + tmp + 's';
+        return rel;
+    };
+    
+    return {
+        workFromParams : function(params){
+            var inElem = document.getElementById(params["inElemId"]);
+            var outElem = document.getElementById(params["outElemId"]);
+            var relatorioHolder = document.getElementById(params["relatorioId"]);
+            var operacao = params["operacao"];
+            stripComentarios = params["stripComentarios"];
+            
+            if(operacao === 'indentar') {
+                outElem.value = indent(inElem.value);
+               
+            }
+            else {
+                inElem.value = unIndent(outElem.value);
+            }          
+            relatorioHolder.innerText = imprimirRelatorio();
+        },
+        indentarFromInToOut : function(inElemId, outElemId){
+            var inElem = document.getElementById(inElemId);
+            var outElem = document.getElementById(outElemId);
+            outElem.value = indent(inElem.value);
+        },
+        indentarTexto : function(valorElemento){
+            return indent(valorElemento);
+        },
+        relatorio : function(mode){
+            var relat = imprimirRelatorio();
+            if(mode === 'alertMode')
+                alert(relat);
+            return relat;
+        }
+    }
+}();
+
+</script>
+</body>
+</html>
