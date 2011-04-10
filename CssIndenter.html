@@ -56,6 +56,8 @@ li span               { font-weight: bold; }
 <div>
 <h3>Changelog:</h3>
 <ul>
+    <li><span>1.5</span><br />
+        Alteração do layout: botões passam para barra no topo;
     <li><span>1.4</span><br />
         Alteração do layout: lado a lado; botões sem texto e no meio; relatórios sob a área de código;
     </li>
@@ -109,15 +111,26 @@ var WMCssIndent = function() {
     var momentoInicial;
     var momentoFinal;
     var stripComentarios = true;
+    var valElemPos;
+    var linhas;
+    var linhasOut;
+    var counter;
+    var selector;
+    var selectorLength;
+    var maxSelector;        
 
     var getCleanPropriedadesArray = function(regra){
-        var atrValor = regra.replace(/^.*\{[ ]*([^}]*)\}.*$/,'$1');
-        if(!stripComentarios)
-            atrValor = atrValor.replace(/[ ]*\/[*].*?[*]\/[ ]*/,' ');
-        atrValor = atrValor.replace(/\s*(:|;)\s*/,'$1 ');
-        var propriedades = atrValor.split('; ');
+        var atrValor = regra.replace(/[ ]*\/[*].*?[*]\/[ ]*/,' ');        
+        atrValor = atrValor.replace(/^.*\{[ ]*([^}]*)\}.*$/,'$1');
+        
+        var propriedades = atrValor.split(';');
         propriedades = removeEmpties(propriedades);
+        for (i=0;i<propriedades.length;i++) {
+            propriedades[i] = propriedades[i] + ';'
+            propriedades[i] = propriedades[i].replace(/\s*(:)\s*/,'$1 ');
+        }
         propriedades.sort();
+
         return propriedades;
     }
     
@@ -129,7 +142,7 @@ var WMCssIndent = function() {
     
     var colocaPropriedadesInBlock = function(regra){
         var propriedades = getCleanPropriedadesArray(regra);
-        var almost = '    ' + propriedades.join('; \n    ') + ';';
+        var almost = '    ' + propriedades.join('\n    ');
         return almost.replace(/[;]+/,';');
     }
 
@@ -168,14 +181,14 @@ var WMCssIndent = function() {
     }
     
     var sanitize = function (texto){
+        // Limpa espaços, coloca uma marcação de nova linha e passa a string
+        // para uma única linha
         var output = texto.replace(/\n/g,' ');        
-        output = output.replace(/}\ */g,'}£');
-        if(stripComentarios)
-            output = output.replace(/\/\*.*?\*\//g,' ');
-        else {
-            output = output.replace(/£\s*(\/\*.*?\*\/)/g,'£$1£');
-            output = output.replace(/£+\s*£+/g,'£');
-        }
+        output = output.replace(/\/\*.*?\*\//g,' ');
+        output = output.replace(/}/g,'}£');
+
+        output = output.replace(/£\s*(\/\*.*?\*\/)/g,'£$1£');
+        output = output.replace(/£+\s*£+/g,'£');
         output = output.replace(/\s+/g,' ');
         return output;
     };
@@ -185,7 +198,7 @@ var WMCssIndent = function() {
         var indexToDelete = [];
         var len = arr.length;
         for(i=0;i<len;i++){
-            if('' + arr[i] === '')
+            if('' + arr[i].trim() === '')
                 indexToDelete[indexToDelete.length] = i;
         }
         
@@ -207,34 +220,45 @@ var WMCssIndent = function() {
     };
     
     var trim = function(texto){
-        return texto.replace(/^\ *(.*)\ *$/,'$1');
+        return texto.replace(/^\ *(.*?)\ *$/,'$1');
     };
-        
-
-    var indent = function(valElem){
+    
+    var log = function(elem) {
+        if(console) {console.log(elem);}
+    };
+    
+    var init = function(valElem){
         numRegras = 0;
         numSelectors = 0;
         var tempDate = new Date();
         momentoInicial = tempDate.getTime();
-        var valElemPos = sanitize(valElem);
-        var linhas = valElemPos.split('£');
+
         numRegras = 0;
-        var linhasOut = [];
-        var counter = linhas.length;
-        var selector='';
-        var selectorLength = 0;
-        var maxSelector = 0;
+        valElemPos = sanitize(valElem);
+        linhas = valElemPos.split('£');
+        linhasOut = [];
+        counter = linhas.length;
+        selector='';
+        selectorLength = 0;
+        maxSelector = 0;        
+    }
+
+    var indent = function(valElem){
+        log('Indent');
+        init(valElem);
 
         var linhaN;
         for( i = 0; i< counter; i++){
             linhaN = linhas[i];
-            if(/^\/\*.*\*\/$/.test(linhaN)) continue;
+            if(/^\/\*.*?\*\/$/.test(linhaN)) continue;
             if(''+linhaN === '') continue;
             
             numRegras += 1;
             linhaN = linhaN.replace(/\/\*.*?\*\//g,' ');
             linhaN = linhaN.replace(/\s+/g,' ');
-            selector = linhaN.replace(/\{.*\}/,'');
+
+            selector = linhaN.replace(/\{.*?\}/,'');
+
             selectorLength = getSelectorLength(selector);
             if( selectorLength > maxSelector) maxSelector = selectorLength;
         }
@@ -263,26 +287,16 @@ var WMCssIndent = function() {
     };
 
     var unIndent = function(valElem){
-        numRegras = 0;
-        numSelectors = 0;
-        var tempDate = new Date();
-        momentoInicial = tempDate.getTime();
-        var valElemPos = sanitize(valElem);
-        var linhas = valElemPos.split('£');
-        numRegras = 0;
-        var linhasOut = [];
-        var counter = linhas.length;
-        var selector='';
-        var selectorLength = 0;
-        var maxSelector = 0;
+        log('unIndent');
+        init(valElem);
 
         var i=0;
         var linhaN;
         for( i = 0; i< counter; i++){
             linhaN = linhas[i];
-            if(/^\/\*.*\*\/$/.test(linhaN)) continue;
+            if(/^\/\*.*?\*\/$/.test(linhaN)) continue;
             if(''+linhaN === '') continue;
-            
+
             numRegras += 1;
         }
         
@@ -293,7 +307,7 @@ var WMCssIndent = function() {
             selector = linhaN.split('{')[0];
 
             if(indexMarca > 0) {
-                regra = selector + ' { \n' + colocaPropriedadesInBlock(linhaN) + '\n} \n';
+                regra = selector.replace(/\s*,\s*/g,', ') + ' { \n' + colocaPropriedadesInBlock(linhaN) + '\n} \n';
             }
             else {
                 regra = linhaN;
