@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html> 
 <head>
 <title>CSS Indenter v1.4</title>
@@ -5,14 +6,13 @@
 body                  { font-family: Trebuchet MS, Arial, Helvetica, sans-serif; }
 h2                    { margin: 10px; }
 h4                    { clear: both; margin: 2px 0; }
-p                     { margin: 2px; }
 li                    { font-size: 0.9em; }
 li span               { font-weight: bold; }
 .wrapper              { margin: 0; overflow:auto; padding:0 10px; width: 100%; }
-.expandedSide         { float: left; margin:0; padding:0; width: 48%; }
+.expandedSide         { float: left; margin:0; margin-right:1%; padding:0; width: 48%; }
 .collapsedSide        { float: left; margin:0; padding:0; width: 48%; }
-.operacoes            { margin: 20px;}
-.relatorioOperacao    { background-color: #EEEEEE; font-family: Consolas,"Courier New", monospaced; font-size: 0.8em; padding:10px;; }
+.operacoes            { margin: 5px 0px;}
+.relatorioOperacao    { background-color: #EEEEEE; font-family: Consolas,"Courier New", monospaced; font-size: 0.8em; padding-left:5px;}
 .editable             { background-color: #CCCCCC; font-family: Consolas,"Courier New", monospaced; font-size: 10px; height:350px; width: 100%; }
 .botao                { text-align:center;  }
 </style>
@@ -20,27 +20,27 @@ li span               { font-weight: bold; }
 <body>
 <h2>CSS Indenter</h2>
 
-<div class="wrapper_header">
-    <div class="operacoes">
-        <input id="btnReverse" class="botao" type="button" onclick="unProc();" value="Expand «" />
-        <input id="btn" class="botao" type="button" onclick="proc();" value="Collapse »" />
-        <input id="btnMinify" class="botao" type="button" onclick="minify();" value="Minify »" />
-    </div>
-</div>
 <div class="wrapper">
     <div class="expandedSide">
-        <h4>Expanded:</h4>        
-        <p>
+        <h4>Expanded css:</h4>
+        <div class="operacoes">
+            <input id="btn" class="botao" type="button" onclick="proc();" value="Collapse »" />
+            <input id="btnMinify" class="botao" type="button" onclick="minify();" value="Minify »" />
+        </div>
+        <div>
             <textarea id="inText" class="editable"></textarea>
-        </p>
-        <p id="relatorioReverse" class="relatorioOperacao" /></p>
+        </div>
+        <div id="relatorioReverse" class="relatorioOperacao" /></div>
     </div>
     <div class="collapsedSide">
-        <h4>Collapsed / Minified:</h4>
-        <p>
+        <h4>Collapsed / Minified css:</h4>
+        <div class="operacoes">
+            <input id="btnReverse" class="botao" type="button" onclick="unProc();" value="« Expand" />
+        </div>
+        <div>
             <textarea id="outText" class="editable"></textarea>
-        </p>
-        <p id="relatorio" class="relatorioOperacao" /></p>
+        </div>
+        <div id="relatorio" class="relatorioOperacao" /></div>
     </div>
 </div>
 <div style="clear:both;">&nbsp;</div>
@@ -49,9 +49,10 @@ li span               { font-weight: bold; }
 <h3>Changelog:</h3>
 <ul>
     <li><span>1.5</span><br />
-        Alteração do layout: botões passam para barra no topo;
-        Acrescentado o 'Minify';
-        Remoção dos trailing spaces e correcção da elaboração das regras
+        Alteração do layout: botões passam para barra no topo;<br />
+        Acrescentado o 'Minify';<br />
+        Remoção dos trailing spaces e correcção da elaboração das regras<br />
+        Doctype para html5<br />
     <li><span>1.4</span><br />
         Alteração do layout: lado a lado; botões sem texto e no meio; relatórios sob a área de código;
     </li>
