@@ -1,6 +1,6 @@
 <html> 
 <head>
-<title>WM CSS Indenter v1.4</title>
+<title>CSS Indenter v1.4</title>
 <style type="text/css">
 body                  { font-family: Trebuchet MS, Arial, Helvetica, sans-serif; }
 h2                    { margin: 10px; }
@@ -11,28 +11,20 @@ li span               { font-weight: bold; }
 .wrapper              { margin: 0; overflow:auto; padding:0 10px; width: 100%; }
 .expandedSide         { float: left; margin:0; padding:0; width: 48%; }
 .collapsedSide        { float: left; margin:0; padding:0; width: 48%; }
-.operacoes            { margin-bottom:20px;}
-.modo                 { margin-top: 20px; float:left;}
+.operacoes            { margin: 20px;}
 .relatorioOperacao    { background-color: #EEEEEE; font-family: Consolas,"Courier New", monospaced; font-size: 0.8em; padding:10px;; }
 .editable             { background-color: #CCCCCC; font-family: Consolas,"Courier New", monospaced; font-size: 10px; height:350px; width: 100%; }
 .botao                { text-align:center;  }
 </style>
 </head>
 <body>
-<h2>WM CSS Indenter</h2>
+<h2>CSS Indenter</h2>
 
 <div class="wrapper_header">
     <div class="operacoes">
-        <div class="modo">
-            <input id="btn" class="botao" type="button" onclick="proc();" value="Collapse »" />
-        </div>
-        <div class="modo">
-            <input id="btnReverse" class="botao" type="button" onclick="unProc();" value="Expand «" />
-        </div>
-        <div class="modo">
-            <input id="chkComentarios" type="checkbox" checked="checked" /> Retirar comentários
-        </div>
-        <div style="clear:both; height:1px;">&nbsp</div>
+        <input id="btnReverse" class="botao" type="button" onclick="unProc();" value="Expand «" />
+        <input id="btn" class="botao" type="button" onclick="proc();" value="Collapse »" />
+        <input id="btnMinify" class="botao" type="button" onclick="minify();" value="Minify »" />
     </div>
 </div>
 <div class="wrapper">
@@ -44,7 +36,7 @@ li span               { font-weight: bold; }
         <p id="relatorioReverse" class="relatorioOperacao" /></p>
     </div>
     <div class="collapsedSide">
-        <h4>Collapsed:</h4>
+        <h4>Collapsed / Minified:</h4>
         <p>
             <textarea id="outText" class="editable"></textarea>
         </p>
@@ -58,6 +50,8 @@ li span               { font-weight: bold; }
 <ul>
     <li><span>1.5</span><br />
         Alteração do layout: botões passam para barra no topo;
+        Acrescentado o 'Minify';
+        Remoção dos trailing spaces e correcção da elaboração das regras
     <li><span>1.4</span><br />
         Alteração do layout: lado a lado; botões sem texto e no meio; relatórios sob a área de código;
     </li>
@@ -79,25 +73,28 @@ li span               { font-weight: bold; }
 </div>
 <script type="text/javascript">
 
-function proc(){
+var proc = function (){
     var params = base();
     params["operacao"] = 'indentar';
     params["relatorioId"] = 'relatorio';
-    var chkComentarios = document.getElementById('chkComentarios');
-    params["stripComentarios"] = chkComentarios.checked;
     WMCssIndent.workFromParams(params);
 }
 
-function unProc(){
+var unProc = function (){
     var params = base();
     params["operacao"] = 'desindentar';
     params["relatorioId"] = 'relatorioReverse';
-    var chkComentarios = document.getElementById('chkComentarios');
-    params["stripComentarios"] = chkComentarios.checked;
     WMCssIndent.workFromParams(params);
 }
 
-function base(){
+var minify = function (){
+    var params = base();
+    params["operacao"] = 'minify';
+    params["relatorioId"] = 'relatorio';
+    WMCssIndent.workFromParams(params);
+}
+
+var base = function (){
     var params = {};
     params["inElemId"] = 'inText';
     params["outElemId"] = 'outText';    
@@ -136,8 +133,8 @@ var WMCssIndent = function() {
     
     var colocaPropriedadesInLine = function(regra){
         var propriedades = getCleanPropriedadesArray(regra);
-        var almost = propriedades.join('; ') + ';';
-        return almost.replace(/[;]+/,';');
+        var almost = propriedades.join('');
+        return almost.replace(/[;]+/,';').trim();
     }
     
     var colocaPropriedadesInBlock = function(regra){
@@ -243,6 +240,28 @@ var WMCssIndent = function() {
         maxSelector = 0;        
     }
 
+    var minify = function(valElem){
+        log('Minify');
+        init(valElem);
+
+        var linhaN;
+        for( i = 0; i< counter; i++){
+            linhaN = linhas[i];
+            if(/^\/\*.*?\*\/$/.test(linhaN)) continue;
+            if(''+linhaN === '') continue;
+            
+            numRegras += 1;
+            linhaN = linhaN.replace(/\/\*.*?\*\//g,' ');
+            linhaN = linhaN.replace(/\s+/g,'');
+            
+            linhas[i] = linhaN;
+        }
+
+        tempDate = new Date();
+        momentoFinal = tempDate.getTime();
+        return linhas.join('');
+    };
+
     var indent = function(valElem){
         log('Indent');
         init(valElem);
@@ -255,7 +274,7 @@ var WMCssIndent = function() {
             
             numRegras += 1;
             linhaN = linhaN.replace(/\/\*.*?\*\//g,' ');
-            linhaN = linhaN.replace(/\s+/g,' ');
+            linhaN = linhaN.replace(/\s+/g,'');
 
             selector = linhaN.replace(/\{.*?\}/,'');
 
@@ -322,7 +341,7 @@ var WMCssIndent = function() {
     };
     
     var imprimirRelatorio = function () {
-        var rel = 'Relatório:\n' + padRight(35,'Número de regras:') + numRegras + '\n';
+        var rel = padRight(35,'Número de regras:') + numRegras + '\n';
         if(numSelectors>0) {
             rel += padRight(35,'Número de selector expressions:') + numSelectors + '\n';
         }
@@ -341,14 +360,18 @@ var WMCssIndent = function() {
             outElem = document.getElementById(params["outElemId"]);
             relatorioHolder = document.getElementById(params["relatorioId"]);
             var operacao = params["operacao"];
-            stripComentarios = params["stripComentarios"];
             
-            if(operacao === 'indentar') {
-                outElem.value = indent(inElem.value);               
+            switch (operacao){
+                case 'indentar':{
+                    outElem.value = indent(inElem.value);
+                }; break;
+                case 'minify':{
+                    outElem.value = minify(inElem.value);
+                }; break;
+                default:{
+                    inElem.value = unIndent(outElem.value);
+                }; break;
             }
-            else {
-                inElem.value = unIndent(outElem.value);
-            }          
             relatorioHolder.innerText = imprimirRelatorio();
         },
         indentarFromInToOut : function(inElemId, outElemId){
