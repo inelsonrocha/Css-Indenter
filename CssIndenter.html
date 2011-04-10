@@ -1,6 +1,6 @@
 <html> 
 <head>
-<title>WM CSS Indenter v1.2</title>
+<title>WM CSS Indenter v1.4</title>
 <style type="text/css">
 body                  { font-family: Trebuchet MS, Arial, Helvetica, sans-serif; }
 h2                    { margin: 10px; }
@@ -8,36 +8,40 @@ h4                    { clear: both; margin: 2px 0; }
 p                     { margin: 2px; }
 li                    { font-size: 0.9em; }
 li span               { font-weight: bold; }
-.wrapper              { margin: 0; overflow:auto;; padding:0 10px; width: 100%; }
-.expandedSide         { float: left; margin:0;; padding:0; width: 45%; }
-.collapsedSide        { float: left; margin:0;; padding:0; width: 45%; }
-.operacoes            { float: left; margin-top:150px;; width: 9%; }
-.modo                 { margin-top: 20px; text-align:center;; }
+.wrapper              { margin: 0; overflow:auto; padding:0 10px; width: 100%; }
+.expandedSide         { float: left; margin:0; padding:0; width: 48%; }
+.collapsedSide        { float: left; margin:0; padding:0; width: 48%; }
+.operacoes            { margin-bottom:20px;}
+.modo                 { margin-top: 20px; float:left;}
 .relatorioOperacao    { background-color: #EEEEEE; font-family: Consolas,"Courier New", monospaced; font-size: 0.8em; padding:10px;; }
-.editable             { background-color: #CCCCCC; font-family: Consolas,"Courier New", monospaced; font-size: 10px; height:500px; width: 100%; }
-.botao                { font-size: 2em; font-weght:bold; width: 100%; }
+.editable             { background-color: #CCCCCC; font-family: Consolas,"Courier New", monospaced; font-size: 10px; height:350px; width: 100%; }
+.botao                { text-align:center;  }
 </style>
 </head>
 <body>
 <h2>WM CSS Indenter</h2>
 
+<div class="wrapper_header">
+    <div class="operacoes">
+        <div class="modo">
+            <input id="btn" class="botao" type="button" onclick="proc();" value="Collapse »" />
+        </div>
+        <div class="modo">
+            <input id="btnReverse" class="botao" type="button" onclick="unProc();" value="Expand «" />
+        </div>
+        <div class="modo">
+            <input id="chkComentarios" type="checkbox" checked="checked" /> Retirar comentários
+        </div>
+        <div style="clear:both; height:1px;">&nbsp</div>
+    </div>
+</div>
 <div class="wrapper">
     <div class="expandedSide">
-        <h4>Expanded:</h4>
+        <h4>Expanded:</h4>        
         <p>
             <textarea id="inText" class="editable"></textarea>
         </p>
         <p id="relatorioReverse" class="relatorioOperacao" /></p>
-    </div>
-    <div class="operacoes">
-        <div class="modo">
-            <input id="btn" class="botao" type="button" onclick="proc();" value=">" /> <input id="chkComentarios" type="checkbox" checked="checked" title="Retirar todos os comentários" /><br />
-            
-        </div>
-        <div class="modo">
-            <input id="btnReverse" class="botao" type="button" onclick="unProc();" value="<" /> <input id="chkComentariosUn" type="checkbox" checked="checked" title="Retirar todos os comentários" /><br />
-            
-        </div>
     </div>
     <div class="collapsedSide">
         <h4>Collapsed:</h4>
@@ -86,7 +90,7 @@ function unProc(){
     var params = base();
     params["operacao"] = 'desindentar';
     params["relatorioId"] = 'relatorioReverse';
-    var chkComentarios = document.getElementById('chkComentariosUn');
+    var chkComentarios = document.getElementById('chkComentarios');
     params["stripComentarios"] = chkComentarios.checked;
     WMCssIndent.workFromParams(params);
 }
@@ -313,17 +317,20 @@ var WMCssIndent = function() {
         return rel;
     };
     
+    var inElem;
+    var outElem;
+    var relatorioHolder;
+    
     return {
         workFromParams : function(params){
-            var inElem = document.getElementById(params["inElemId"]);
-            var outElem = document.getElementById(params["outElemId"]);
-            var relatorioHolder = document.getElementById(params["relatorioId"]);
+            inElem = document.getElementById(params["inElemId"]);
+            outElem = document.getElementById(params["outElemId"]);
+            relatorioHolder = document.getElementById(params["relatorioId"]);
             var operacao = params["operacao"];
             stripComentarios = params["stripComentarios"];
             
             if(operacao === 'indentar') {
-                outElem.value = indent(inElem.value);
-               
+                outElem.value = indent(inElem.value);               
             }
             else {
                 inElem.value = unIndent(outElem.value);
@@ -331,8 +338,8 @@ var WMCssIndent = function() {
             relatorioHolder.innerText = imprimirRelatorio();
         },
         indentarFromInToOut : function(inElemId, outElemId){
-            var inElem = document.getElementById(inElemId);
-            var outElem = document.getElementById(outElemId);
+            inElem = document.getElementById(inElemId);
+            outElem = document.getElementById(outElemId);
             outElem.value = indent(inElem.value);
         },
         indentarTexto : function(valorElemento){
