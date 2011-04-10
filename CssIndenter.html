@@ -6,7 +6,7 @@
 body                  { font-family: Trebuchet MS, Arial, Helvetica, sans-serif; }
 h2                    { margin: 10px; }
 h4                    { clear: both; margin: 2px 0; }
-li                    { font-size: 0.9em; }
+li                    { font-size: 0.8em; }
 li span               { font-weight: bold; }
 .wrapper              { margin: 0; overflow:auto; padding:0 10px; width: 100%; }
 .expandedSide         { float: left; margin:0; margin-right:1%; padding:0; width: 48%; }
@@ -51,6 +51,7 @@ li span               { font-weight: bold; }
     <li><span>1.5</span><br />
         Alteração do layout: botões passam para barra no topo;<br />
         Acrescentado o 'Minify';<br />
+        Passa a retirar SEMPRE os comentários;<br />
         Remoção dos trailing spaces e correcção da elaboração das regras<br />
         Doctype para html5<br />
     <li><span>1.4</span><br />
@@ -124,7 +125,7 @@ var WMCssIndent = function() {
         var propriedades = atrValor.split(';');
         propriedades = removeEmpties(propriedades);
         for (i=0;i<propriedades.length;i++) {
-            propriedades[i] = propriedades[i] + ';'
+            propriedades[i] = propriedades[i].trim() + ';'
             propriedades[i] = propriedades[i].replace(/\s*(:)\s*/,'$1 ');
         }
         propriedades.sort();
@@ -342,12 +343,12 @@ var WMCssIndent = function() {
     };
     
     var imprimirRelatorio = function () {
-        var rel = padRight(35,'Número de regras:') + numRegras + '\n';
+        var rel = padRight(35,'Number of rules: ') + numRegras + '\n';
         if(numSelectors>0) {
-            rel += padRight(35,'Número de selector expressions:') + numSelectors + '\n';
+            rel += padRight(35,'Number of selector expressions: ') + numSelectors + '\n';
         }
         var tmp = ((momentoFinal - momentoInicial)/1000);
-        rel += padRight(35,'Tempo de execução:')  + tmp + 's';
+        rel += padRight(35,'Execution time:')  + tmp + 's';
         return rel;
     };
     
